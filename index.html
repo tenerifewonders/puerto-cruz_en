@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audioguide Puerto de la Cruz</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#121212">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body { margin: 0; font-family: sans-serif; padding-bottom: 60px; }
+    #map { height: 50vh; width: 100%; }
+    #audio-list { padding: 15px; list-style: none; margin: 0; }
+    #audio-list li { padding: 12px; border-bottom: 1px solid #ddd; cursor: pointer; transition: all 0.2s ease; }
+    #audio-list li:hover { background: #f0f0f0; }
+    #audio-list li.sub-track {
+      padding-left: 30px;
+    }
+    #audio-list li.active-track {
+      background: #e3f2fd;
+      border-left: 5px solid #007bff;
+      font-weight: bold;
+      color: #0056b3;
+    }
+    #audio-player { width: 100%; position: fixed; bottom: 0; left: 0; z-index: 9999; }
+    .marker-active {
+      filter: hue-rotate(140deg) saturate(2.5) brightness(0.9) !important;
+      z-index: 1000 !important;
+    }
+  </style>
+
+<!-- ========================================== -->
+<!-- 🔒 SECURE LICENSE LOCK WITH MEMORY         -->
+<!-- ========================================== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  document.documentElement.style.display = 'none';
+
+  const supabaseUrl = 'https://xzymbvnljudyypdyuisf.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eW1idm5sanVkeXlwZHl1aXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MjExMDYsImV4cCI6MjA5MjA5NzEwNn0.LRCkSCRF-0rDVAFkSvImWUNas21yXHZ29pQYUUZi8RY';
+  const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  const GUIDE_ID = 'puerto-cruz_en';
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const params = new URLSearchParams(window.location.search);
+    let license = params.get('license');
+
+    if (!license) {
+      license = localStorage.getItem(`tw_license_${GUIDE_ID}`);
+    }
+
+    if (!license) {
+      mostrarError("🔒 Access Restricted", "You need a valid license code to access this audioguide.", true);
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from('licenses')
+      .select('id')
+      .eq('license_code', license)
+      .eq('guide', GUIDE_ID)
+      .single();
+
+    if (error || !data) {
+      localStorage.removeItem(`tw_license_${GUIDE_ID}`);
+      mostrarError("❌ Invalid License", "The provided license code is invalid or does not belong to this audioguide.", true);
+      return;
+    }
+
+    localStorage.setItem(`tw_license_${GUIDE_ID}`, license);
+    document.documentElement.style.display = '';
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+  });
+
+  function mostrarError(titulo, mensaje, mostrarBoton) {
+    const enlaceCompra = "https://tenerifewonders.github.io/"; 
+    document.documentElement.innerHTML = `
+      <div style="font-family: sans-serif; text-align: center; padding: 40px 20px; background-color: #f8f9fa; height: 100vh; box-sizing: border-box;">
+        <div style="background: white; max-width: 400px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+          <h2 style="color: #2c3e50; margin-top: 0;">${titulo}</h2>
+          <p style="color: #666; line-height: 1.5; margin-bottom: 25px;">${mensaje}</p>
+          ${mostrarBoton ? `<a href="${enlaceCompra}" style="background: #007bff; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">Purchase Audioguide</a>` : ''}
+        </div>
+      </div>
+    `;
+    document.documentElement.style.display = '';
+  }
+</script>
+<!-- ========================================== -->
+
+</head>
+
+<body>
+
+  <div id="map"></div>
+
+  <p style="padding: 5px 15px; margin: 5px 0;"> 📍
+    <!-- Google Maps Official (Walking route connecting all stops in sequence) -->
+    <a href="https://www.google.com/maps/dir/?api=1&origin=28.4118131,-16.547949&destination=28.4127752,-16.5585252&waypoints=28.417542,-16.5417437%7C28.4187585,-16.544278%7C28.4176278,-16.5456288%7C28.4173442,-16.5463681%7C28.4170105,-16.5481873%7C28.4183182,-16.5491026%7C28.4168196,-16.5499245%7C28.4166788,-16.5504946%7C28.4175173,-16.5538396%7C28.4143524,-16.5584324&travelmode=walking" 
+       target="_blank">
+       Google Maps route available
+    </a>
+    <span>(data connection required)</span>
+  </p>
+
+  <p style="padding: 5px 15px; margin: 5px 0;"> 📄
+    <a href="EN-PUERTO.html" target="_blank">
+       Opening hours and practical tips
+    </a>
+  </p>
+
+  <div id="android-msg" style="display:none; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; margin: 10px;">
+    ➕ <strong> To install the app on Android and use it offline: Click browser menu (three dots) → Add to Home screen / Install</strong>
+  </div>
+
+  <div id="ios-msg" style="display:none; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; margin: 10px;">
+    ➕ <strong> To install the app on your iPhone and use it offline: Share → Add to Home Screen</strong>
+  </div>
+  
+  <ul id="audio-list">
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/0.mp3">0. Introduction: Puerto de la Cruz – The City of Layers</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/1.mp3">1. Parque Taoro and the Gran Hotel Taoro: The Dream that Founded a City</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/2.mp3">2. Avenida de Colón and Costa Martiánez: The Sea Transformed</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/3.mp3">3. Paseo de San Telmo and the Ermita de San Telmo: The Sanctuary Facing the Ocean</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/4.mp3">4. Church of Nuestra Señora de la Peña de Francia: The Refuge of the Ancient City</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/5.mp3">5. Plaza de Europa and the Town Hall: The Edge Between Land and Sea</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/6.mp3">6. Church of San Francisco: The Echo of Silences</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/7.mp3">7. Plaza del Charco: The Heartbeat Between Two Worlds</li>
+    
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.0.mp3">8.0. La Ranilla: Where the City Dreams Itself (Introduction)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.1.mp3">8.1. Victor Ash – "La frontera del paraíso" (Calle Mequinez, 2)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.2.mp3">8.2. Ro.Ro – "¡Rum, rum, rum, la botella de rum!" (Calle Mequinez, 4)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.3.mp3">8.3. Iker Muro – "La Macaronesia" (Calle Mequinez, 21)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.4.mp3">8.4. Sex – Intervention by "El Niño de las Pinturas" (Calle Mequinez, 66)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.5.mp3">8.5. Juliana – "Si puedes soñarlo, puedes crearlo" (Calle Maretas, 11)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.6.mp3">8.6. Dulk – Mural by Dulk (Calle Peñita, 6)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.7.mp3">8.7. 3ttman – "Los Magos" (Calle El Lomo, 28)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.8.mp3">8.8. Kob – Mural by Kob (Calle Teobaldo Power, 28)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.9.mp3">8.9. Belin – "La eterna juventud" (Calle Puerto Viejo, 17)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.10.mp3">8.10. Sabotaje al Montaje – "Ritual" (Calle Teobaldo Power, 16)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.11.mp3">8.11. FEOFL!P – "Navíos volátiles" (Calle Teobaldo Power, 8)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.12.mp3">8.12. Roa – Mural by Roa (Calle El Lomo, 7)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.13.mp3">8.13. Liqen – "Ánfora voladora" (Calle Cruz Verde, 3)</li>
+    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.14.mp3">8.14. La Ranilla: The Synthesis of the City (Outro)</li>
+    
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/9.mp3">9. Castillo de San Felipe: The Defence Facing the Horizon</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/10.mp3">10. Playa Jardín: The Closing of the Mirage</li>
+    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/11.mp3">11. Farewell: Puerto de la Cruz, the City that Exists Between Planes</li>
+  </ul>
+
+  <audio id="audio-player" controls controlsList="nodownload"></audio>
+
+  <script>
+    const map = L.map('map', {
+      attributionControl: false
+    }).setView([28.415286, -16.550134], 16); 
+
+    L.tileLayer('./tiles/{z}/{x}/{y}.png', {
+      minZoom: 11,
+      maxZoom: 18,
+      maxNativeZoom: 17,
+      tileSize: 256
+    }).addTo(map);
+
+    const markersByAudio = {};
+    const audioAliases = {
+      "https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.14.mp3":"https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.0.mp3"
+    };
+
+    function resolveMarkerAudio(audioUrl) {
+      for (const [subUrl, parentUrl] of Object.entries(audioAliases)) {
+        if (parentUrl === audioUrl) {
+          return subUrl;
+        }
+      }
+      return audioUrl;
+    }
+
+    let activeMarker = null;
+
+    function activateTrack(audioUrl, triggerSource) {
+      const player = document.getElementById("audio-player");
+      
+      const silentStops = [];
+
+      if (!silentStops.includes(audioUrl)) {
+        if (player.src !== audioUrl) {
+          player.src = audioUrl;
+          player.play();
+        } else if (player.paused) {
+          player.play();
+        }
+      }
+
+      const items = document.querySelectorAll("#audio-list li");
+      items.forEach(li => {
+        if (li.getAttribute("data-audio") === audioUrl) {
+          li.classList.add("active-track");
+          if (triggerSource !== 'list') {
+            li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        } else {
+          li.classList.remove("active-track");
+        }
+      });
+
+      const marker = markersByAudio[audioAliases[audioUrl] || audioUrl];
+      if (marker) {
+        if (activeMarker && activeMarker._icon) {
+          activeMarker._icon.classList.remove("marker-active");
+        }
+
+        activeMarker = marker;
+        if (marker._icon) {
+          marker._icon.classList.add("marker-active");
+        }
+
+        if (triggerSource !== 'marker') {
+          marker.openPopup();
+          map.setView(marker.getLatLng(), map.getZoom() < 16 ? 16 : map.getZoom(), { animate: true });
+        }
+      }
+    }
+
+    fetch('./puerto-cruz.geojson')
+      .then(res => res.json())
+      .then(data => {
+        L.geoJSON(data, {
+          onEachFeature: (feature, layer) => {
+            const audioUrl = feature.properties.audio;
+            const name = feature.properties.Name;
+
+            layer.bindPopup(name);
+
+            if (audioUrl) {
+              markersByAudio[audioUrl] = layer;
+            }
+
+            layer.on("click", () => {
+              activateTrack(resolveMarkerAudio(audioUrl), 'marker');
+            });
+          }
+        }).addTo(map);
+      });
+
+    const items = document.querySelectorAll("#audio-list li");
+    items.forEach(li => {
+      li.addEventListener("click", () => {
+        const url = li.getAttribute("data-audio");
+        if (url) {
+          activateTrack(url, 'list');
+        }
+      });
+    });
+
+    map.locate({ setView: false });
+    map.on('locationfound', e => {
+      L.circleMarker(e.latlng, {
+        radius: 8,
+        color: "#007bff",
+        fillColor: "#3fa0ff",
+        fillOpacity: 0.8
+      }).addTo(map);
+    });
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js");
+    }
+  </script>
+  <script>
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone) {
+      document.getElementById('ios-msg').style.display = 'block';
+    }
+    if (/android/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches) {
+      document.getElementById('android-msg').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
