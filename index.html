@@ -17,22 +17,187 @@
   <style>
     body { margin: 0; font-family: sans-serif; padding-bottom: 60px; }
     #map { height: 50vh; width: 100%; }
-    #audio-list { padding: 15px; list-style: none; margin: 0; }
-    #audio-list li { padding: 12px; border-bottom: 1px solid #ddd; cursor: pointer; transition: all 0.2s ease; }
-    #audio-list li:hover { background: #f0f0f0; }
-    #audio-list li.sub-track {
-      padding-left: 30px;
+    /* Base Audio List Container */
+    #audio-list {
+      padding: 15px;
+      list-style: none;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 600px;
     }
+    #audio-list li {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    /* Active Track Highlight */
     #audio-list li.active-track {
-      background: #e3f2fd;
-      border-left: 5px solid #007bff;
-      font-weight: bold;
-      color: #0056b3;
+      background: #e0f2fe !important;
+      border-left: 5px solid #0284c7 !important;
     }
+
+    /* OPTION 1: Spotify / App Playlist Style */
+    .track-opt1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .track-opt1:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .track-opt1 .track-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 14px;
+    }
+    .track-opt1 .play-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #eff6ff;
+      color: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .track-opt1 .track-arrow {
+      color: #94a3b8;
+      font-size: 16px;
+    }
+
+    /* Sub-track (murals): indented, slightly lighter */
+    .track-opt1.sub-track {
+      margin-left: 20px;
+      background: #f8fafc;
+      border-color: #e2e8f0;
+      box-shadow: none;
+    }
+    .track-opt1.sub-track .play-badge {
+      background: #f0f9ff;
+      color: #38bdf8;
+    }
+    .track-opt1.sub-track .track-left {
+      font-weight: 500;
+      color: #334155;
+      font-size: 13px;
+    }
+
     #audio-player { width: 100%; position: fixed; bottom: 0; left: 0; z-index: 9999; }
     .marker-active {
       filter: hue-rotate(140deg) saturate(2.5) brightness(0.9) !important;
       z-index: 1000 !important;
+    }
+
+    /* Action Buttons (Pill Style) */
+    .action-bar-wrapper {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      padding: 12px 15px;
+    }
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      max-width: 520px;
+      margin: 0;
+    }
+    .action-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: #eef2f6;
+      color: #1e293b;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 25px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .action-btn:hover {
+      background: #f0f0f0;
+      border-color: #cbd5e1;
+    }
+    .action-btn:active {
+      transform: scale(0.97);
+      background: #dbe2ea;
+    }
+    .action-btn small {
+      display: block;
+      font-weight: 400;
+      color: #64748b;
+      font-size: 11px;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+    .maps-btn { border-left: 3px solid #4285f4; }
+    .tips-btn { border-left: 3px solid #f59e0b; }
+
+    /* Discreet Collapsible Installation Banner */
+    .install-banner {
+      margin: 8px 15px;
+      padding: 6px 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #334155;
+      max-width: 520px;
+    }
+    .install-banner summary {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      color: #1e293b;
+      outline: none;
+      user-select: none;
+      list-style: none;
+    }
+    .install-banner summary::-webkit-details-marker {
+      display: none;
+    }
+    .install-banner summary .plus-icon {
+      font-size: 11px;
+      transition: transform 0.2s ease;
+      color: #475569;
+    }
+    .install-banner[open] summary .plus-icon {
+      transform: rotate(45deg);
+    }
+    .install-banner .install-steps {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #fcd34d;
+      font-weight: 400;
+      font-size: 11.5px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .install-banner .install-steps div {
+      margin-bottom: 4px;
+    }
+    .install-banner .install-steps div:last-child {
+      margin-bottom: 0;
     }
   </style>
 
@@ -106,58 +271,151 @@
 
   <div id="map"></div>
 
-  <p style="padding: 5px 15px; margin: 5px 0;"> 📍
-    <!-- Google Maps Official (Walking route connecting all stops in sequence) -->
-    <a href="https://www.google.com/maps/dir/?api=1&origin=28.4118131,-16.547949&destination=28.4127752,-16.5585252&waypoints=28.417542,-16.5417437%7C28.4187585,-16.544278%7C28.4176278,-16.5456288%7C28.4173442,-16.5463681%7C28.4170105,-16.5481873%7C28.4183182,-16.5491026%7C28.4168196,-16.5499245%7C28.4166788,-16.5504946%7C28.4175173,-16.5538396%7C28.4143524,-16.5584324&travelmode=walking" 
-       target="_blank">
-       Google Maps route available
-    </a>
-    <span>(data connection required)</span>
-  </p>
+  <div class="action-bar-wrapper">
+    <div class="action-bar">
+      <!-- Google Maps Official (Walking route connecting all stops in sequence) -->
+      <a href="https://www.google.com/maps/dir/?api=1&origin=28.4118131,-16.547949&destination=28.4127752,-16.5585252&waypoints=28.417542,-16.5417437%7C28.4187585,-16.544278%7C28.4176278,-16.5456288%7C28.4173442,-16.5463681%7C28.4170105,-16.5481873%7C28.4183182,-16.5491026%7C28.4168196,-16.5499245%7C28.4166788,-16.5504946%7C28.4175173,-16.5538396%7C28.4143524,-16.5584324&travelmode=walking" 
+         target="_blank" class="action-btn maps-btn">
+        <span>📍</span>
+        <span>Google Maps <small>(Data required)</small></span>
+      </a>
 
-  <p style="padding: 5px 15px; margin: 5px 0;"> 📄
-    <a href="EN-PUERTO-CRUZ.html" target="_blank">
-       Opening hours and practical tips
-    </a>
-  </p>
-
-  <div id="android-msg" style="display:none; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; margin: 10px;">
-    ➕ <strong> To install the app on Android and use it offline: Click browser menu (three dots) → Add to Home screen / Install</strong>
+      <a href="EN-PUERTO-CRUZ.html" target="_blank" class="action-btn tips-btn">
+        <span>⭐️</span>
+        <span>Key Tips</span>
+      </a>
+    </div>
   </div>
 
-  <div id="ios-msg" style="display:none; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; margin: 10px;">
-    ➕ <strong> To install the app on your iPhone and use it offline: Share → Add to Home Screen</strong>
-  </div>
+  <details id="android-msg" class="install-banner" style="display:none;">
+    <summary>
+      <span class="plus-icon">➕</span>
+      <span>Offline installation</span>
+    </summary>
+    <div class="install-steps">
+      <div>Open browser menu ( ⁝ 3 dots at top right)</div>
+      <div>Select "Add to Home screen" or "Install"</div>
+    </div>
+  </details>
+
+  <details id="ios-msg" class="install-banner" style="display:none;">
+    <summary>
+      <span class="plus-icon">➕</span>
+      <span>Offline installation</span>
+    </summary>
+    <div class="install-steps">
+      <div>Tap Share button ( ⎋ box with arrow)</div>
+      <div>Scroll &amp; select "Add to Home Screen"</div>
+    </div>
+  </details>
   
   <ul id="audio-list">
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/0.mp3">0. Introduction: Puerto de la Cruz – The City of Layers</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/1.mp3">1. Parque Taoro and the Gran Hotel Taoro: The Dream that Founded a City</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/2.mp3">2. Avenida de Colón and Costa Martiánez: The Sea Transformed</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/3.mp3">3. Paseo de San Telmo and the Ermita de San Telmo: The Sanctuary Facing the Ocean</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/4.mp3">4. Church of Nuestra Señora de la Peña de Francia: The Refuge of the Ancient City</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/5.mp3">5. Plaza de Europa and the Town Hall: The Edge Between Land and Sea</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/6.mp3">6. Church of San Francisco: The Echo of Silences</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/7.mp3">7. Plaza del Charco: The Heartbeat Between Two Worlds</li>
-    
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.0.mp3">8.0. La Ranilla: Where the City Dreams Itself (Introduction)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.1.mp3">8.1. Victor Ash – "La frontera del paraíso" (Calle Mequinez, 2)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.2.mp3">8.2. Ro.Ro – "¡Rum, rum, rum, la botella de rum!" (Calle Mequinez, 4)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.3.mp3">8.3. Iker Muro – "La Macaronesia" (Calle Mequinez, 21)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.4.mp3">8.4. Sex – Intervention by "El Niño de las Pinturas" (Calle Mequinez, 66)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.5.mp3">8.5. Juliana – "Si puedes soñarlo, puedes crearlo" (Calle Maretas, 11)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.6.mp3">8.6. Dulk – Mural by Dulk (Calle Peñita, 6)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.7.mp3">8.7. 3ttman – "Los Magos" (Calle El Lomo, 28)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.8.mp3">8.8. Kob – Mural by Kob (Calle Teobaldo Power, 28)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.9.mp3">8.9. Belin – "La eterna juventud" (Calle Puerto Viejo, 17)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.10.mp3">8.10. Sabotaje al Montaje – "Ritual" (Calle Teobaldo Power, 16)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.11.mp3">8.11. FEOFL!P – "Navíos volátiles" (Calle Teobaldo Power, 8)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.12.mp3">8.12. Roa – Mural by Roa (Calle El Lomo, 7)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.13.mp3">8.13. Liqen – "Ánfora voladora" (Calle Cruz Verde, 3)</li>
-    <li class="sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.14.mp3">8.14. La Ranilla: The Synthesis of the City (Outro)</li>
-    
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/9.mp3">9. Castillo de San Felipe: The Defence Facing the Horizon</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/10.mp3">10. Playa Jardín: The Closing of the Mirage</li>
-    <li data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/11.mp3">11. Farewell: Puerto de la Cruz, the City that Exists Between Planes</li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/0.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>0. Introduction: Puerto de la Cruz – The City of Layers</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/1.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>1. Parque Taoro and the Gran Hotel Taoro: The Dream that Founded a City</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/2.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>2. Avenida de Colón and Costa Martiánez: The Sea Transformed</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/3.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>3. Paseo de San Telmo and the Ermita de San Telmo: The Sanctuary Facing the Ocean</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/4.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>4. Church of Nuestra Señora de la Peña de Francia: The Refuge of the Ancient City</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/5.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>5. Plaza de Europa and the Town Hall: The Edge Between Land and Sea</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/6.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>6. Church of San Francisco: The Echo of Silences</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/7.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>7. Plaza del Charco: The Heartbeat Between Two Worlds</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.0.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.0. La Ranilla: Where the City Dreams Itself (Introduction)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.1.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.1. Victor Ash – "La frontera del paraíso" (Calle Mequinez, 2)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.2.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.2. Ro.Ro – "¡Rum, rum, rum, la botella de rum!" (Calle Mequinez, 4)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.3.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.3. Iker Muro – "La Macaronesia" (Calle Mequinez, 21)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.4.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.4. Sex – Intervention by "El Niño de las Pinturas" (Calle Mequinez, 66)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.5.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.5. Juliana – "Si puedes soñarlo, puedes crearlo" (Calle Maretas, 11)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.6.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.6. Dulk – Mural by Dulk (Calle Peñita, 6)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.7.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.7. 3ttman – "Los Magos" (Calle El Lomo, 28)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.8.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.8. Kob – Mural by Kob (Calle Teobaldo Power, 28)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.9.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.9. Belin – "La eterna juventud" (Calle Puerto Viejo, 17)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.10.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.10. Sabotaje al Montaje – "Ritual" (Calle Teobaldo Power, 16)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.11.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.11. FEOFL!P – "Navíos volátiles" (Calle Teobaldo Power, 8)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.12.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.12. Roa – Mural by Roa (Calle El Lomo, 7)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.13.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.13. Liqen – "Ánfora voladora" (Calle Cruz Verde, 3)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1 sub-track" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/8.14.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>8.14. La Ranilla: The Synthesis of the City (Outro)</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/9.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>9. Castillo de San Felipe: The Defence Facing the Horizon</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/10.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>10. Playa Jardín: The Closing of the Mirage</span></div>
+      <span class="track-arrow">›</span>
+    </li>
+    <li class="track-opt1" data-audio="https://xzymbvnljudyypdyuisf.supabase.co/storage/v1/object/public/puerto-cruz_en/11.mp3">
+      <div class="track-left"><span class="play-badge">▶</span><span>11. Farewell: Puerto de la Cruz, the City that Exists Between Planes</span></div>
+      <span class="track-arrow">›</span>
+    </li>
   </ul>
 
   <audio id="audio-player" controls controlsList="nodownload"></audio>
